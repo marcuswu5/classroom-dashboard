@@ -1,0 +1,34 @@
+---
+description: "[classroom-dashboard repo] Warm paper palette and calm UI from classroom planner reference"
+globs: "**/*.{html,css,scss,tsx,jsx,vue}"
+alwaysApply: false
+---
+
+# Classroom dashboard design palette
+
+**Scope:** This file lives in this repository’s `.cursor/rules/` only. Cursor loads it when this workspace (classroom-dashboard) is open; it is not a user-global rule.
+
+**Intent:** Simple, low-fatigue UI — warm neutrals, one brown accent, minimal chrome. Match `classroom_curved_rows.html`; prefer whitespace over borders; cards only for interactive or grouped blocks; semantic HTML, AA contrast, visible focus.
+
+## Tokens (use variables, not one-off hex for the same role)
+
+- `--bg` `#F5F2EC` · `--panel-bg` `#FDFAF5` · `--border` `#D9D3C7` · `--text` `#2A2218` · `--muted` `#7A7060`
+- `--accent` `#8B5E3C` · `--accent-l` `#C49A6C` · `--tag` `#EDE8DF` · `--shadow` `rgba(60,40,20,.10)` (e.g. `0 2px 8px`)
+- **Type:** `--fh` = Georgia / Times, serif (titles, uppercase section labels + letter-spacing). `--fb` = Helvetica Neue / Helvetica / Arial, sans-serif (body, controls).
+
+## Status / canvas (legends, maps, canvas)
+
+Occupied `#4A9070` / `#1D6045`; empty/neutral `#E8D5C0` strokes `#5A3E28`–`#8B5E3C`; pathway `#E0D8CC` strokes `#B0A898`/`#C0B8A8`; stairs `#C8BEAC` `#8B7355` `#D4C8B4`; destructive `#C0604A` hover `#FFE8E4`; workspace `#EAE5DC` dot `#C4BBAC` (subtle).
+
+## Shape
+
+Panels `border-radius: 8px`, `1px solid var(--border)`. Small controls `4px`–`6px`. No purple/blue SaaS defaults or loud gradients. Range inputs: `accent-color: var(--accent)`.
+
+```css
+/* ✅ GOOD */
+.panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px var(--shadow);
+}
+```

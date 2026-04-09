@@ -1,0 +1,52 @@
+<svg width="100%" viewBox="0 0 680 720" role="img" xmlns="http://www.w3.org/2000/svg">
+  <title style="fill:rgb(0, 0, 0);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">Hand-drawn armchair with folding desk extending left over the seat</title>
+  <desc style="fill:rgb(0, 0, 0);stroke:none;color:rgb(0, 0, 0);stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto">A cozy armchair with a folding desk tray unfolded inward over the seat area, in a loose hand-drawn style</desc>
+
+  
+
+  <!-- Back rest -->
+  <path stroke-width="7" d="M200 430&#10;       C192 420 185 360 188 300&#10;       C190 245 198 200 210 185&#10;       C225 165 255 155 340 152&#10;       C425 155 455 165 470 185&#10;       C482 200 490 245 492 300&#10;       C495 360 488 420 480 430&#10;       Z" style="fill:rgb(232, 213, 196);stroke:rgb(45, 32, 22);color:rgb(0, 0, 0);stroke-width:7px;stroke-linecap:round;stroke-linejoin:round;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Left arm -->
+  <path stroke-width="6" d="M200 430&#10;       C190 432 168 435 155 438&#10;       C138 442 132 450 130 460&#10;       C128 472 132 485 140 490&#10;       C150 496 170 497 185 495&#10;       C200 493 210 488 215 480&#10;       C220 470 220 455 218 442&#10;       Z" style="fill:rgb(232, 213, 196);stroke:rgb(45, 32, 22);color:rgb(0, 0, 0);stroke-width:6px;stroke-linecap:round;stroke-linejoin:round;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Right arm -->
+  <path stroke-width="6" d="M480 430&#10;       C490 432 512 435 525 438&#10;       C542 442 548 450 550 460&#10;       C552 472 548 485 540 490&#10;       C530 496 510 497 495 495&#10;       C480 493 470 488 465 480&#10;       C460 470 460 455 462 442&#10;       Z" style="fill:rgb(232, 213, 196);stroke:rgb(45, 32, 22);color:rgb(0, 0, 0);stroke-width:6px;stroke-linecap:round;stroke-linejoin:round;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Seat base -->
+  <path stroke-width="7" d="M195 440&#10;       C195 460 198 490 205 510&#10;       C212 528 225 535 340 536&#10;       C455 535 468 528 475 510&#10;       C482 490 485 460 485 440&#10;       Z" style="fill:rgb(232, 213, 196);stroke:rgb(45, 32, 22);color:rgb(0, 0, 0);stroke-width:7px;stroke-linecap:round;stroke-linejoin:round;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Seat cushion -->
+  <path stroke-width="5" d="M220 440&#10;       C218 452 220 468 228 478&#10;       C240 490 280 496 340 496&#10;       C400 496 440 490 452 478&#10;       C460 468 462 452 460 440&#10;       C450 430 410 423 340 423&#10;       C270 423 230 430 220 440&#10;       Z" style="fill:rgb(212, 184, 160);stroke:rgb(45, 32, 22);color:rgb(0, 0, 0);stroke-width:5px;stroke-linecap:round;stroke-linejoin:round;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <!-- cushion crease -->
+  <path fill="none" stroke="#2D2016" stroke-width="3" stroke-linecap="round" opacity="0.45" d="M260 464 C290 458 310 456 340 456 C370 456 390 458 420 464" style="fill:none;stroke:rgb(45, 32, 22);color:rgb(0, 0, 0);stroke-width:3px;stroke-linecap:round;stroke-linejoin:miter;opacity:0.45;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Left front leg -->
+  <path stroke-width="6" d="M225 530&#10;       C222 545 220 558 218 572&#10;       C217 580 220 586 228 587&#10;       C237 588 244 583 246 574&#10;       C248 560 248 545 246 530&#10;       Z" style="fill:rgb(232, 213, 196);stroke:rgb(45, 32, 22);color:rgb(0, 0, 0);stroke-width:6px;stroke-linecap:round;stroke-linejoin:round;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Right front leg -->
+  <path stroke-width="6" d="M435 530&#10;       C438 545 440 558 442 572&#10;       C443 580 440 586 432 587&#10;       C423 588 416 583 414 574&#10;       C412 560 412 545 414 530&#10;       Z" style="fill:rgb(232, 213, 196);stroke:rgb(45, 32, 22);color:rgb(0, 0, 0);stroke-width:6px;stroke-linecap:round;stroke-linejoin:round;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Texture lines on back -->
+  <path fill="none" stroke="#2D2016" stroke-width="2.5" stroke-linecap="round" opacity="0.3" d="M240 220 C260 210 310 205 340 205 C370 205 410 210 440 222" style="fill:none;stroke:rgb(45, 32, 22);color:rgb(0, 0, 0);stroke-width:2.5px;stroke-linecap:round;stroke-linejoin:miter;opacity:0.3;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <path fill="none" stroke="#2D2016" stroke-width="2" stroke-linecap="round" opacity="0.2" d="M225 265 C255 256 300 252 340 252 C380 252 415 256 455 265" style="fill:none;stroke:rgb(45, 32, 22);color:rgb(0, 0, 0);stroke-width:2px;stroke-linecap:round;stroke-linejoin:miter;opacity:0.2;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- FOLDING DESK — unfolded inward (left) over the seat -->
+  <!-- Hinge on right arm top -->
+  <circle cx="532" cy="450" r="5.5" stroke-width="3.5" style="fill:rgb(200, 184, 154);stroke:rgb(45, 32, 22);color:rgb(0, 0, 0);stroke-width:3.5px;stroke-linecap:round;stroke-linejoin:round;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Support bracket from hinge angling down-left under desk -->
+  <path stroke-width="4.5" d="M532 450 C525 462 510 472 498 478" style="fill:none;stroke:rgb(45, 32, 22);color:rgb(0, 0, 0);stroke-width:4.5px;stroke-linecap:round;stroke-linejoin:round;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Desk surface: extends leftward from hinge across seat -->
+  <path stroke-width="5" d="M532 418&#10;       C530 414 522 410 370 410&#10;       C330 410 312 413 308 419&#10;       C305 424 306 440 310 445&#10;       C314 450 332 453 370 453&#10;       C522 453 530 449 532 445&#10;       Z" style="fill:rgb(200, 184, 154);stroke:rgb(45, 32, 22);color:rgb(0, 0, 0);stroke-width:5px;stroke-linecap:round;stroke-linejoin:round;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Wood grain lines on desk surface -->
+  <path fill="none" stroke="#2D2016" stroke-width="1.5" stroke-linecap="round" opacity="0.25" d="M510 423 C470 421 420 420 360 422" style="fill:none;stroke:rgb(45, 32, 22);color:rgb(0, 0, 0);stroke-width:1.5px;stroke-linecap:round;stroke-linejoin:miter;opacity:0.25;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <path fill="none" stroke="#2D2016" stroke-width="1.5" stroke-linecap="round" opacity="0.2" d="M514 432 C472 430 422 429 358 431" style="fill:none;stroke:rgb(45, 32, 22);color:rgb(0, 0, 0);stroke-width:1.5px;stroke-linecap:round;stroke-linejoin:miter;opacity:0.2;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+  <path fill="none" stroke="#2D2016" stroke-width="1.5" stroke-linecap="round" opacity="0.15" d="M512 442 C470 440 420 440 360 441" style="fill:none;stroke:rgb(45, 32, 22);color:rgb(0, 0, 0);stroke-width:1.5px;stroke-linecap:round;stroke-linejoin:miter;opacity:0.15;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+  <!-- Support strut from underside of desk back down to arm -->
+  <path stroke-width="4" d="M498 453 C500 464 504 474 510 482 C516 490 524 494 530 486" style="fill:none;stroke:rgb(45, 32, 22);color:rgb(0, 0, 0);stroke-width:4px;stroke-linecap:round;stroke-linejoin:round;opacity:1;font-family:&quot;Anthropic Sans&quot;, -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, sans-serif;font-size:16px;font-weight:400;text-anchor:start;dominant-baseline:auto"/>
+
+</svg>
