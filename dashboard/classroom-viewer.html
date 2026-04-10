@@ -34,6 +34,8 @@
     }
     .btn-open:hover{border-color:var(--accent-l);background:#EDE0D2;color:var(--text)}
     .btn-open:focus-visible{outline:2px solid var(--accent-l);outline-offset:2px}
+    .btn-open:disabled{opacity:.45;cursor:not-allowed}
+    .btn-open[aria-pressed="true"]{background:#EDE0D2;border-color:var(--accent-l);color:var(--text)}
     #fileInput{position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;left:-99px}
     .floor{
       flex:1;min-height:0;display:flex;flex-direction:column;position:relative;
@@ -77,6 +79,7 @@
     </div>
     <input type="file" id="fileInput" accept=".json,application/json,.classroom.json" aria-label="Choose classroom JSON file">
     <button type="button" class="btn-open" id="btnPick" title="Planner export: .classroom.json">Open layout…</button>
+    <button type="button" class="btn-open" id="btnSeatLabels" disabled aria-pressed="false" title="Show or hide seat codes (e.g. A-1) on each seat">Seat labels</button>
   </header>
 
   <main class="floor" id="floor" aria-label="Floor plan area. Drop a layout file here.">
@@ -86,8 +89,7 @@
     </div>
     <div class="hud" id="hud" hidden>
       <div class="leg" id="legend">
-        <div class="li"><div class="ls" style="background:#E8D5C0;border-color:#8B5E3C"></div>Empty</div>
-        <div class="li"><div class="ls" style="background:#4A9070;border-color:#1D6045"></div>Occupied</div>
+        <div class="li"><div class="ls" style="background:#E8D5C0;border-color:#8B5E3C"></div>Seat</div>
         <div class="li"><div class="ls" style="background:#E0D8CC;border-color:#B0A898"></div>Aisle</div>
         <div class="li"><div class="ls" style="background:#C8BEAC;border-color:#8B7355"></div>Stair aisle</div>
       </div>

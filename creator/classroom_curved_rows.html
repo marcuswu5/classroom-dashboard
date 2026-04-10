@@ -59,6 +59,8 @@ h1 small{font-size:.75rem;color:var(--muted);margin-left:.75rem;font-family:var(
 .pb:focus-visible{outline:2px solid var(--accent-l);outline-offset:2px}
 .rb:focus-visible,.btn-seat-label:focus-visible,.rl-add:focus-visible,.rl-step:focus-visible,.rl-val:focus-visible,.split-inp:focus-visible,.row-block-inp:focus-visible{outline:2px solid var(--accent-l);outline-offset:2px}
 .pb .ic{font-size:.95rem;line-height:1;min-width:14px;text-align:center}
+.pb .ic.ic-svg{display:inline-flex;align-items:center;justify-content:center;min-width:16px}
+.pb .ic.ic-svg svg{display:block;width:16px;height:16px;flex-shrink:0}
 .active-strip{font-size:.65rem;color:var(--muted);margin:.35rem 0 .2rem;line-height:1.35}
 .seating-block{opacity:1;transition:opacity .2s ease}
 .seating-block.is-disabled{opacity:.45;pointer-events:none}
@@ -153,15 +155,15 @@ h1 small{font-size:.75rem;color:var(--muted);margin-left:.75rem;font-family:var(
       <div class="split-count-group">
         <span class="srl">Columns</span>
         <div class="split-pair-row" role="group" aria-label="Columns: split zone into two or three vertical parts">
-          <button type="button" class="pb" id="btnSplitCol2" title="Two columns with one vertical aisle"><span class="ic">◫</span>2</button>
-          <button type="button" class="pb" id="btnSplitCol3" title="Three columns with two vertical aisles">3</button>
+          <button type="button" class="pb" id="btnSplitCol2" title="Two columns with one vertical aisle"><span class="ic ic-svg" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="13" height="13" rx="1.5" stroke="currentColor" stroke-width="1.25"/><line x1="8" y1="2.5" x2="8" y2="13.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg></span>2</button>
+          <button type="button" class="pb" id="btnSplitCol3" title="Three columns with two vertical aisles"><span class="ic ic-svg" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="13" height="13" rx="1.5" stroke="currentColor" stroke-width="1.25"/><line x1="5.33" y1="2.5" x2="5.33" y2="13.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/><line x1="10.67" y1="2.5" x2="10.67" y2="13.5" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg></span>3</button>
         </div>
       </div>
       <div class="split-count-group">
         <span class="srl">Rows</span>
         <div class="split-pair-row" role="group" aria-label="Rows: split zone into two or three horizontal parts">
-          <button type="button" class="pb" id="btnSplitRow2" title="Two row bands with one horizontal aisle"><span class="ic">▥</span>2</button>
-          <button type="button" class="pb" id="btnSplitRow3" title="Three row bands with two horizontal aisles">3</button>
+          <button type="button" class="pb" id="btnSplitRow2" title="Two row bands with one horizontal aisle"><span class="ic ic-svg" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="13" height="13" rx="1.5" stroke="currentColor" stroke-width="1.25"/><line x1="2.5" y1="8" x2="13.5" y2="8" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg></span>2</button>
+          <button type="button" class="pb" id="btnSplitRow3" title="Three row bands with two horizontal aisles"><span class="ic ic-svg" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="1.5" y="1.5" width="13" height="13" rx="1.5" stroke="currentColor" stroke-width="1.25"/><line x1="2.5" y1="5.33" x2="13.5" y2="5.33" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/><line x1="2.5" y1="10.67" x2="13.5" y2="10.67" stroke="currentColor" stroke-width="1.25" stroke-linecap="round"/></svg></span>3</button>
         </div>
       </div>
       <button type="button" class="pb" id="btnMerge" title="Removes the selected aisle; nested splits on each side are merged first (left/top side wins at each step)"><span class="ic">⮢</span>Merge with sibling</button>
@@ -530,6 +532,8 @@ function buildLibraryEntry(name,id){
     name:trimmed,
     savedAt:new Date().toISOString(),
     formatVersion:LAYOUT_FORMAT_VERSION,
+    floorW:FLOOR_W,
+    floorH:FLOOR_H,
     layoutRoot:JSON.parse(JSON.stringify(layoutRoot)),
     globalCurve,globalGapC,globalGapR,
     ui:{selectKind,selectPath,seatLabels:JSON.parse(JSON.stringify(seatLabelSettings))}
@@ -698,6 +702,8 @@ function wireLayoutPersistenceUi(){
         formatVersion:LAYOUT_FORMAT_VERSION,
         name:(name||'').slice(0,80)||'classroom-layout',
         savedAt:new Date().toISOString(),
+        floorW:FLOOR_W,
+        floorH:FLOOR_H,
         layoutRoot:JSON.parse(JSON.stringify(layoutRoot)),
         globalCurve,globalGapC,globalGapR,
         ui:{selectKind,selectPath,seatLabels:JSON.parse(JSON.stringify(seatLabelSettings))}

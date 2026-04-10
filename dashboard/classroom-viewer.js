@@ -6,10 +6,17 @@
     MARGIN_X = 28,
     MARGIN_Y = 28,
     MAX_CHAIRS_ROW = 48;
-  const FLOOR_W = 1020,
-    FLOOR_H = 640;
-  const CURVE_X_MIN = MARGIN_X,
-    CURVE_X_MAX = FLOOR_W - MARGIN_X;
+  const DEFAULT_FLOOR_W = 1020,
+    DEFAULT_FLOOR_H = 640;
+  const FLOOR_W_MIN = 400,
+    FLOOR_W_MAX = 2400,
+    FLOOR_H_MIN = 300,
+    FLOOR_H_MAX = 1600;
+  let layoutFloorW = DEFAULT_FLOOR_W,
+    layoutFloorH = DEFAULT_FLOOR_H;
+  function curveXMax() {
+    return layoutFloorW - MARGIN_X;
+  }
   const MIN_LEAF = 48,
     LEAF_PAD = 8;
   const DEFAULT_GAP = 24;
@@ -53,13 +60,6 @@
 
   let seatLabelSettings = defaultSeatLabelSettings();
 
-  function normalizeSeatKey(k) {
-    const m = k.match(/^[abm]:(\d+),(\d+)$/);
-    if (m) return m[1] + ',' + m[2];
-    if (/^\d+,\d+$/.test(k)) return k;
-    return null;
-  }
-
   function clampGapStyle(s) {
     return s === 'stair' ? 'stair' : 'aisle';
   }
@@ -74,9 +74,8 @@
   }
 
   function validateUi(ui, sanitizedRoot) {
-    const sl = sanitizeSeatLabels(ui && ui.seatLabels);
+    const sl = sanitizeSeatLabels(ui.seatLabels);
     const d = { selectKind: 'leaf', selectPath: [], seatLabels: sl };
-    if (!ui || typeof ui !== 'object') return d;
     const path = Array.isArray(ui.selectPath) ? ui.selectPath.map((x) => parseInt(x, 10)) : [];
     if (path.length > MAX_LAYOUT_DEPTH) return d;
     if (path.some((x) => x !== 0 && x !== 1)) return d;
@@ -101,14 +100,7 @@
         if (isNaN(x)) return 1;
         return Math.min(MAX_CHAIRS_ROW, Math.max(0, x));
       });
-      const seating = {};
-      if (node.seating && typeof node.seating === 'object') {
-        for (const [k, v] of Object.entries(node.seating)) {
-          const nk = normalizeSeatKey(k);
-          if (nk) seating[nk] = !!v;
-        }
-      }
-      return { type: 'leaf', id, mainRows, seating };
+      return { type: 'leaf', id, mainRows };
     }
     if (node.type === 'v') {
       const ratio =
@@ -147,9 +139,18 @@
     throw new Error('Unknown layout node type');
   }
 
+  function requireFloorDim(v, min, max) {
+    const x = Math.round(+v);
+    if (!Number.isFinite(x)) throw new Error('Invalid data: floorW and floorH are required');
+    return Math.min(max, Math.max(min, x));
+  }
+
   function parseSnapshotShape(raw) {
     if (!raw || typeof raw !== 'object') throw new Error('Invalid data');
     if (raw.formatVersion !== LAYOUT_FORMAT_VERSION) throw new Error('Unsupported file version');
+    if (!raw.ui || typeof raw.ui !== 'object') throw new Error('Invalid data: ui is required');
+    if (!raw.ui.seatLabels || typeof raw.ui.seatLabels !== 'object')
+      throw new Error('Invalid data: ui.seatLabels is required');
     const layoutRoot0 = sanitizeLayoutNode(raw.layoutRoot, 0);
     const gc = Math.round(+raw.globalCurve);
     const gC = Math.round(+raw.globalGapC);
@@ -158,6 +159,8 @@
     const globalCurve0 = Math.min(CURVE_MAX, Math.max(CURVE_MIN, gc));
     const globalGapC0 = Math.min(GAP_C_MAX, Math.max(GAP_C_MIN, gC));
     const globalGapR0 = Math.min(GAP_R_MAX, Math.max(GAP_R_MIN, gR));
+    const floorW = requireFloorDim(raw.floorW, FLOOR_W_MIN, FLOOR_W_MAX);
+    const floorH = requireFloorDim(raw.floorH, FLOOR_H_MIN, FLOOR_H_MAX);
     const ui = validateUi(raw.ui, layoutRoot0);
     const name = typeof raw.name === 'string' ? raw.name.slice(0, 80).trim() : '';
     const seatLabels = ui.seatLabels;
@@ -166,6 +169,8 @@
       globalCurve: globalCurve0,
       globalGapC: globalGapC0,
       globalGapR: globalGapR0,
+      floorW,
+      floorH,
       ui,
       seatLabels,
       name: name || 'Untitled',
@@ -182,16 +187,6 @@
     if (node.type === 'leaf') return 1;
     if (node.type === 'v') return countLeaves(node.left) + countLeaves(node.right);
     return countLeaves(node.top) + countLeaves(node.bottom);
-  }
-
-  function clampChairs(n) {
-    const x = parseInt(n, 10);
-    if (isNaN(x) || x < 1) return 1;
-    return Math.min(MAX_CHAIRS_ROW, x);
-  }
-
-  function seatKey(r, c) {
-    return r + ',' + c;
   }
 
   function bendYAtX(cx, xMin, xMax, amt) {
@@ -222,13 +217,12 @@
   }
 
   /**
-   * Row gr is global (0 = top band on floor, grMax = bottom). Column c is per zone row (0 = left).
-   * gm = number of global row bands; ncr = chairs on this zone row.
+   * gr = global row (0 = top of floor). gcol = column slot 0..gnCol-1 with slot 0 = rightmost seat in that row.
    */
-  function computeSeatLabel(gm, ncr, gr, c) {
+  function computeSeatLabel(gm, gnCol, gr, gcol) {
     const cfg = seatLabelSettings;
     const rowDisp = cfg.rowOrder === 'desc' ? gm - 1 - gr : gr;
-    const colDisp = cfg.colOrder === 'desc' ? ncr - 1 - c : c;
+    const colDisp = cfg.colOrder === 'desc' ? gcol : gnCol - 1 - gcol;
     const rowPart = formatSeatAxis(cfg.rowAxis, rowDisp);
     const colPart = formatSeatAxis(cfg.colAxis, colDisp);
     const sep = cfg.sep || '-';
@@ -238,7 +232,7 @@
   /** Logical row height (curve removed) so global row bands align across the floor. */
   function seatLogicalRowY(ch) {
     const ix = ch.cx + CW / 2;
-    return ch.cy + CH / 2 - bendYAtX(ix, CURVE_X_MIN, CURVE_X_MAX, globalCurve);
+    return ch.cy + CH / 2 - bendYAtX(ix, MARGIN_X, curveXMax(), globalCurve);
   }
 
   /** Assign ch.gr in 0..gm-1 (0 = top of floor). Returns gm. */
@@ -270,6 +264,23 @@
       }
     });
     return gm;
+  }
+
+  /** Within each global row, set gcol (0 = rightmost) and gnCol = seats in that row — continues across aisles. */
+  function assignGlobalColumnIndices(chairs) {
+    const byRow = new Map();
+    for (const ch of chairs) {
+      if (!byRow.has(ch.gr)) byRow.set(ch.gr, []);
+      byRow.get(ch.gr).push(ch);
+    }
+    for (const rowChairs of byRow.values()) {
+      rowChairs.sort((a, b) => b.cx + CW / 2 - (a.cx + CW / 2));
+      const gnCol = rowChairs.length;
+      rowChairs.forEach((ch, gcol) => {
+        ch.gnCol = gnCol;
+        ch.gcol = gcol;
+      });
+    }
   }
 
   function partitionV(w, gap, ratio) {
@@ -344,7 +355,11 @@
     return out;
   }
 
-  function buildLeafChairs(leaf, rect, leafPath) {
+  function assignRectsRoot() {
+    return assignRects(layoutRoot, MARGIN_X, MARGIN_Y, layoutFloorW - 2 * MARGIN_X, layoutFloorH - 2 * MARGIN_Y, []);
+  }
+
+  function buildLeafChairs(leaf, rect) {
     const pad = LEAF_PAD;
     const innerLeft = rect.x + pad,
       innerTop = rect.y + pad;
@@ -373,25 +388,26 @@
       for (let c = 0; c < ncr; c++) {
         let cx = innerLeft + dx + colXs[c];
         let cy = yCursor + r * stepY;
-        cy += bendYAtX(cx + CW / 2, CURVE_X_MIN, CURVE_X_MAX, amt);
+        cy += bendYAtX(cx + CW / 2, MARGIN_X, curveXMax(), amt);
         const ix = cx + CW / 2,
           iy = cy + CH / 2;
         if (ix >= rect.x && ix <= rect.x + rect.w && iy >= rect.y && iy <= rect.y + rect.h)
-          out.push({ leafPath: leafPath.slice(), r, c, ncr, cx, cy, seatKey: seatKey(r, c), leaf });
+          out.push({ cx, cy, r, c });
       }
     }
     return out;
   }
 
   function buildChairLayout() {
-    const items = assignRects(layoutRoot, MARGIN_X, MARGIN_Y, FLOOR_W - 2 * MARGIN_X, FLOOR_H - 2 * MARGIN_Y, []);
+    const items = assignRectsRoot();
     const all = [];
     for (const it of items) {
       if (it.kind !== 'leaf') continue;
-      all.push(...buildLeafChairs(it.node, it.rect, it.path));
+      all.push(...buildLeafChairs(it.node, it.rect));
     }
     const gm = assignGlobalRowIndices(all);
-    for (const ch of all) ch.label = computeSeatLabel(gm, ch.ncr, ch.gr, ch.c);
+    assignGlobalColumnIndices(all);
+    for (const ch of all) ch.label = computeSeatLabel(gm, ch.gnCol, ch.gr, ch.gcol);
     return all;
   }
 
@@ -451,17 +467,17 @@
     ctx.restore();
   }
 
-  function drawArmchair(ctx, x, y, occ) {
+  function drawArmchair(ctx, x, y) {
     const sx = CW / 680,
       sy = CH / 720;
     ctx.save();
     ctx.translate(x, y);
     ctx.scale(sx, sy);
-    const base = occ ? '#4A9070' : '#E8D5C0',
-      str = occ ? '#1D6045' : '#5A3E28',
-      cush = occ ? '#7ABDA0' : '#D4B896',
-      legs = occ ? '#3A7060' : '#CDB898',
-      dsk = occ ? '#2E7A58' : '#C8B880';
+    const base = '#E8D5C0',
+      str = '#5A3E28',
+      cush = '#D4B896',
+      legs = '#CDB898',
+      dsk = '#C8B880';
     function P(d) {
       return new Path2D(d);
     }
@@ -511,7 +527,7 @@
     fi(P('M532 418 C530 414 522 410 370 410 C330 410 312 413 308 419 C305 424 306 440 310 445 C314 450 332 453 370 453 C522 453 530 449 532 445 Z'), dsk, 5);
     ctx.beginPath();
     ctx.arc(532, 450, 5.5, 0, Math.PI * 2);
-    ctx.fillStyle = occ ? '#3A8060' : '#C8B89A';
+    ctx.fillStyle = '#C8B89A';
     ctx.fill();
     ctx.strokeStyle = str;
     ctx.lineWidth = 3.5;
@@ -548,8 +564,8 @@
   function drawSeatLabels(ctx, chairs) {
     if (!seatLabelSettings.show) return;
     ctx.save();
-    const fz = Math.max(8, Math.min(11, 10 * (FLOOR_W / 1020)));
-    const lw = Math.max(2, 2.2 * (FLOOR_W / 1020));
+    const fz = Math.max(8, Math.min(11, 10 * (layoutFloorW / 1020)));
+    const lw = Math.max(2, 2.2 * (layoutFloorW / 1020));
     for (const ch of chairs) {
       if (!ch.label) continue;
       const tx = ch.cx + CW / 2,
@@ -574,19 +590,19 @@
     const pad = 8;
     const availW = Math.max(1, wrap.clientWidth - pad);
     const availH = Math.max(1, wrap.clientHeight - pad);
-    const scale = Math.min(availW / FLOOR_W, availH / FLOOR_H);
+    const scale = Math.min(availW / layoutFloorW, availH / layoutFloorH);
     const dpr = window.devicePixelRatio || 1;
-    const bw = Math.max(1, Math.round(FLOOR_W * scale * dpr));
-    const bh = Math.max(1, Math.round(FLOOR_H * scale * dpr));
+    const bw = Math.max(1, Math.round(layoutFloorW * scale * dpr));
+    const bh = Math.max(1, Math.round(layoutFloorH * scale * dpr));
     cv.width = bw;
     cv.height = bh;
-    cv.style.width = Math.round(FLOOR_W * scale) + 'px';
-    cv.style.height = Math.round(FLOOR_H * scale) + 'px';
+    cv.style.width = Math.round(layoutFloorW * scale) + 'px';
+    cv.style.height = Math.round(layoutFloorH * scale) + 'px';
     const ctx = cv.getContext('2d');
     ctx.setTransform(scale * dpr, 0, 0, scale * dpr, 0, 0);
-    ctx.clearRect(0, 0, FLOOR_W, FLOOR_H);
+    ctx.clearRect(0, 0, layoutFloorW, layoutFloorH);
 
-    const flat = assignRects(layoutRoot, MARGIN_X, MARGIN_Y, FLOOR_W - 2 * MARGIN_X, FLOOR_H - 2 * MARGIN_Y, []);
+    const flat = assignRectsRoot();
     for (const it of flat) {
       if (it.kind === 'gap') {
         if (it.style === 'stair') drawStairInRect(ctx, it.rect.x, it.rect.y, it.rect.w, it.rect.h);
@@ -595,19 +611,10 @@
     }
 
     const chairs = buildChairLayout();
-    for (const ch of chairs) {
-      const seating = ch.leaf.seating;
-      const occ = !!(seating && seating[ch.seatKey]);
-      drawArmchair(ctx, ch.cx, ch.cy, occ);
-    }
+    for (const ch of chairs) drawArmchair(ctx, ch.cx, ch.cy);
     drawSeatLabels(ctx, chairs);
 
-    let tot = chairs.length,
-      occ = 0;
-    for (const ch of chairs) {
-      const seating = ch.leaf.seating;
-      if (seating && seating[ch.seatKey]) occ++;
-    }
+    const tot = chairs.length;
     const statsEl = document.getElementById('stats');
     if (statsEl) {
       statsEl.innerHTML =
@@ -616,17 +623,17 @@
         '</strong></div>' +
         '<div class="stat">Seats <strong>' +
         tot +
-        '</strong></div>' +
-        '<div class="stat">Occupied <strong>' +
-        occ +
-        '</strong></div>' +
-        '<div class="stat">Empty <strong>' +
-        (tot - occ) +
-        '</strong></div>' +
-        '<div class="stat">Occupancy <strong>' +
-        (tot ? Math.round((occ / tot) * 100) : 0) +
-        '%</strong></div>';
+        '</strong></div>';
     }
+  }
+
+  function syncSeatLabelsButton() {
+    const btn = document.getElementById('btnSeatLabels');
+    if (!btn) return;
+    const on = !!seatLabelSettings.show;
+    btn.disabled = !layoutRoot;
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.setAttribute('aria-label', on ? 'Seat labels on. Click to hide.' : 'Seat labels off. Click to show.');
   }
 
   function setViewMode(hasLayout) {
@@ -638,6 +645,7 @@
     if (cv) cv.hidden = !hasLayout;
     if (emptyMsg) emptyMsg.hidden = hasLayout;
     if (hud) hud.hidden = !hasLayout;
+    syncSeatLabelsButton();
   }
 
   function setStatus(msg, isErr) {
@@ -654,7 +662,9 @@
     globalCurve = p.globalCurve;
     globalGapC = p.globalGapC;
     globalGapR = p.globalGapR;
-    seatLabelSettings = p.seatLabels ? sanitizeSeatLabels(p.seatLabels) : defaultSeatLabelSettings();
+    layoutFloorW = p.floorW;
+    layoutFloorH = p.floorH;
+    seatLabelSettings = sanitizeSeatLabels(p.seatLabels);
     const titleEl = document.getElementById('layoutTitle');
     if (titleEl) titleEl.textContent = p.name;
     document.title = p.name + ' — Classroom viewer';
@@ -675,6 +685,8 @@
         applyPayload(String(reader.result));
       } catch (e) {
         layoutRoot = null;
+        layoutFloorW = DEFAULT_FLOOR_W;
+        layoutFloorH = DEFAULT_FLOOR_H;
         seatLabelSettings = defaultSeatLabelSettings();
         const titleEl = document.getElementById('layoutTitle');
         if (titleEl) titleEl.textContent = '';
@@ -699,6 +711,16 @@
       btnPick.addEventListener('click', () => {
         fileInput.value = '';
         fileInput.click();
+      });
+    }
+
+    const btnSeatLabels = document.getElementById('btnSeatLabels');
+    if (btnSeatLabels) {
+      btnSeatLabels.addEventListener('click', () => {
+        if (!layoutRoot) return;
+        seatLabelSettings.show = !seatLabelSettings.show;
+        syncSeatLabelsButton();
+        draw();
       });
     }
 
