@@ -135,6 +135,48 @@
     .ls{width:12px;height:12px;border-radius:2px;border:1px solid var(--border);flex-shrink:0}
     .stats{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
     .stat{font-size:.62rem;color:var(--muted)}.stat strong{color:var(--text);font-weight:600}
+    .forms-bar{
+      flex-shrink:0;display:flex;flex-direction:column;align-items:stretch;gap:.4rem;
+      padding:.5rem .85rem .55rem;border-bottom:1px solid var(--border);
+      background:rgba(253,250,245,.78);font-size:.68rem
+    }
+    .forms-bar[hidden]{display:none!important}
+    .forms-intro{display:flex;flex-wrap:wrap;align-items:baseline;gap:.35rem .65rem}
+    .forms-title{font-family:var(--fh);font-size:.78rem;color:var(--text);font-weight:600}
+    .forms-intro-text{font-size:.65rem;color:var(--muted);line-height:1.4;max-width:52rem}
+    .forms-help{
+      font-size:.62rem;color:var(--muted);border:1px solid var(--border);border-radius:8px;
+      padding:.28rem .45rem;background:var(--panel-bg)
+    }
+    .forms-help>summary{
+      cursor:pointer;color:var(--text);font-weight:600;font-size:.65rem;list-style-position:outside
+    }
+    .forms-help>summary:focus-visible{outline:2px solid var(--accent-l);outline-offset:2px;border-radius:4px}
+    .forms-help ul{margin:.35rem 0 0 1.1rem;line-height:1.45;padding:0}
+    .forms-help li{margin:.15rem 0}
+    .forms-row{
+      display:flex;flex-wrap:wrap;align-items:flex-end;gap:.45rem .65rem
+    }
+    .forms-field-wrap{display:flex;flex-direction:column;gap:.18rem;flex:1;min-width:min(100%,200px);max-width:min(100%,420px)}
+    .forms-label{font-size:.58rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+    .forms-field{
+      width:100%;padding:.32rem .45rem;border:1px solid var(--border);
+      border-radius:6px;background:#fff;color:var(--text);font-size:.65rem;font-family:var(--fb)
+    }
+    .forms-field:focus-visible{outline:2px solid var(--accent-l);outline-offset:1px}
+    .forms-actions{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .55rem}
+    .forms-btn-secondary{font-size:.6rem!important;padding:.28rem .5rem!important;opacity:.92}
+    .forms-meta{font-size:.62rem;color:var(--muted);flex:1;min-width:140px;line-height:1.35}
+    .forms-meta.ok{color:var(--text)}
+    .forms-hint{font-size:.6rem;color:var(--muted);line-height:1.4;flex-basis:100%;max-width:none;margin-top:-.05rem}
+    .forms-out{
+      width:100%;font-size:.62rem;color:var(--muted);line-height:1.45;
+      padding:.35rem 0 0;border-top:1px dashed var(--border);margin-top:.15rem
+    }
+    .forms-out a{color:var(--accent);word-break:break-all}
+    .forms-out strong{color:var(--text);font-weight:600}
+    .forms-quiz{margin-top:.35rem}
+    .forms-quiz li{margin:.12rem 0 0 1rem}
   </style>
 </head>
 <body>
@@ -149,6 +191,37 @@
     <button type="button" class="btn-open" id="btnPick" title="Planner export: .classroom.json">Open layout…</button>
     <button type="button" class="btn-open" id="btnSeatLabels" disabled aria-pressed="false" title="Show or hide seat codes (e.g. A-1) on each seat">Seat labels</button>
   </header>
+
+  <section class="forms-bar" id="formsBar" aria-label="Google Forms attendance and polls">
+    <div class="forms-intro">
+      <span class="forms-title">Attendance and polls</span>
+      <span class="forms-intro-text">See responses from a Google Form you own (attendance counts and quiz scores).</span>
+    </div>
+    <details class="forms-help">
+      <summary>How this works</summary>
+      <ul>
+        <li><strong>Sign in with Google</strong> using the same account that owns (or can edit) your form.</li>
+        <li>Students still fill out the <strong>normal Google Form</strong> in their browser—nothing changes for them.</li>
+        <li>This page only <strong>reads</strong> responses so you can see counts and quiz percentages here.</li>
+        <li>Use the <strong>web address your school or host gave you</strong> (bookmark it). If you are testing on your own computer, that may look like <code>http://localhost:3847</code>.</li>
+      </ul>
+    </details>
+    <div class="forms-row">
+      <div class="forms-field-wrap">
+        <label class="forms-label" for="formsFormId">Form link or ID</label>
+        <input type="text" class="forms-field" id="formsFormId" placeholder="Paste the form link from the address bar, or paste the long ID" autocomplete="off" spellcheck="false" aria-describedby="formsFormHint">
+      </div>
+      <span id="formsFormHint" class="forms-hint">Tip: In Google Forms, use <strong>Send</strong> or copy the link from the browser while editing the form. Short <code>forms.gle</code> links need to be opened once, then copy the long address from the bar.</span>
+    </div>
+    <div class="forms-actions">
+      <a class="btn-open" id="formsLinkRedirect" href="/auth/google">Sign in with Google</a>
+      <button type="button" class="btn-open forms-btn-secondary" id="formsBtnGis" disabled title="Optional: sign in in a small window instead of leaving this page">Or use a small sign-in window</button>
+      <button type="button" class="btn-open" id="formsBtnRefresh" disabled>Update results</button>
+      <button type="button" class="btn-open" id="formsBtnDisconnect" disabled>Sign out</button>
+      <span class="forms-meta" id="formsStatus" role="status" aria-live="polite"></span>
+    </div>
+    <div class="forms-out" id="formsOut" hidden></div>
+  </section>
 
   <main class="floor" id="floor" aria-label="Floor plan area. Drop a layout file here.">
     <div class="canvas-wrap is-empty" id="canvasWrap">
@@ -165,6 +238,7 @@
     </div>
   </main>
 </div>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="classroom-viewer.js"></script>
 </body>
 </html>
