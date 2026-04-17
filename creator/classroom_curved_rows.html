@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Classroom Seating Planner</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -11,13 +11,19 @@
   --accent:#8B5E3C;--accent-l:#C49A6C;--tag:#EDE8DF;--shadow:rgba(60,40,20,.10);
   --fh:'Georgia','Times New Roman',serif;--fb:'Helvetica Neue',Helvetica,Arial,sans-serif;
 }
-body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100vh}
-.app{max-width:min(1580px,calc(100vw - 1.25rem));margin:0 1.25rem 3rem .5rem;padding:1.25rem 0 0;display:flex;flex-direction:column;gap:.85rem}
+body{font-family:var(--fb);background:var(--bg);color:var(--text);min-height:100dvh}
+.app{
+  max-width:min(1580px,calc(100vw - 1.25rem - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px)));
+  margin:0 max(.5rem,env(safe-area-inset-left,0px)) 3rem max(.5rem,env(safe-area-inset-right,0px));
+  padding:max(1.25rem,env(safe-area-inset-top,0px)) 0 0;
+  padding-bottom:max(2rem,env(safe-area-inset-bottom,0px));
+  display:flex;flex-direction:column;gap:.85rem
+}
 h1{font-family:var(--fh);font-size:1.5rem;font-weight:normal;padding-bottom:.5rem;border-bottom:1.5px solid var(--border)}
 h1 small{font-size:.75rem;color:var(--muted);margin-left:.75rem;font-family:var(--fb);text-transform:uppercase;letter-spacing:.04em}
-.panels{display:grid;grid-template-columns:minmax(232px,260px) minmax(0,1fr);gap:.75rem 1.25rem;align-items:stretch;min-height:min(calc(100vh - 8.5rem),1200px)}
+.panels{display:grid;grid-template-columns:minmax(232px,260px) minmax(0,1fr);gap:.75rem 1.25rem;align-items:stretch;min-height:min(calc(100dvh - 8.5rem),1200px)}
 .panel{background:var(--panel-bg);border:1px solid var(--border);border-radius:8px;padding:1rem 1.1rem;box-shadow:0 2px 8px var(--shadow);transition:border-color .2s ease,box-shadow .2s ease}
-.panel--toolbar{padding:.75rem .85rem;position:sticky;top:.65rem;max-height:calc(100vh - 1.25rem);overflow-y:auto;overflow-x:hidden;align-self:start;z-index:2;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+.panel--toolbar{padding:.75rem .85rem;position:sticky;top:max(.65rem,env(safe-area-inset-top,0px));max-height:calc(100dvh - 1.25rem - env(safe-area-inset-top,0px));overflow-y:auto;overflow-x:hidden;align-self:start;z-index:2;scrollbar-width:thin;scrollbar-color:var(--border) transparent}
 .panel--toolbar::-webkit-scrollbar{width:6px}
 .panel--toolbar::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 .floor-panel{padding:.85rem 1rem;display:flex;flex-direction:column;min-width:0;min-height:0}
@@ -36,8 +42,14 @@ h1 small{font-size:.75rem;color:var(--muted);margin-left:.75rem;font-family:var(
 .rl-item{display:flex;align-items:center;gap:4px;background:var(--tag);border:1px solid var(--border);border-radius:4px;padding:2px 5px;font-size:.62rem;line-height:1.15;min-height:19px;transition:.12s}
 .rl-item.dragging{opacity:.45}
 .rl-item.drag-over{outline:2px dashed var(--accent-l);outline-offset:0;background:#EDE0D2}
-.rl-drag{cursor:grab;color:var(--muted);user-select:none;font-size:.72rem;line-height:1;padding:0 1px;letter-spacing:-2px}
+.rl-drag{
+  cursor:grab;color:var(--muted);user-select:none;font-size:.85rem;line-height:1;
+  min-width:2.25rem;min-height:2.25rem;display:inline-flex;align-items:center;justify-content:center;
+  margin:-6px 0 -6px -4px;padding:6px 8px;border-radius:6px;touch-action:manipulation
+}
 .rl-drag:active{cursor:grabbing}
+.rl-drag.rl-drag--active{cursor:grabbing;touch-action:none}
+.rl-drag:focus-visible{outline:2px solid var(--accent-l);outline-offset:2px}
 .rl-lbl{flex:1;min-width:0;color:var(--muted);font-variant-numeric:tabular-nums;font-size:.62rem;line-height:1.2}
 .rl-lbl strong{color:var(--text);font-weight:600}
 .rl-step{width:18px;height:18px;flex-shrink:0;border:1px solid var(--border);border-radius:3px;background:var(--panel-bg);color:var(--text);cursor:pointer;font-size:.72rem;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;transition:.12s}
@@ -66,7 +78,7 @@ h1 small{font-size:.75rem;color:var(--muted);margin-left:.75rem;font-family:var(
 .seating-block.is-disabled{opacity:.45;pointer-events:none}
 .split-block{opacity:1;transition:opacity .2s ease}
 .split-block.is-disabled{opacity:.45;pointer-events:none}
-.cw{flex:1 1 0;min-height:min(68vh,560px);min-width:0;width:100%;overflow:hidden;background:#EAE5DC;border-radius:6px;background-image:radial-gradient(circle,#C4BBAC 1px,transparent 1px);background-size:20px 20px;touch-action:none;position:relative}
+.cw{flex:1 1 0;min-height:min(68dvh,560px);min-width:0;width:100%;overflow:hidden;background:#EAE5DC;border-radius:6px;background-image:radial-gradient(circle,#C4BBAC 1px,transparent 1px);background-size:20px 20px;touch-action:none;position:relative}
 .cw canvas{display:block;cursor:crosshair}
 .stats{display:flex;gap:14px;margin-top:.65rem;flex-wrap:wrap;padding-top:.5rem;border-top:1px solid var(--border)}
 .stat{font-size:.69rem;color:var(--muted)}.stat strong{color:var(--text);font-weight:600}
@@ -95,14 +107,29 @@ h1 small{font-size:.75rem;color:var(--muted);margin-left:.75rem;font-family:var(
 .pb:disabled{opacity:.45;cursor:not-allowed}
 .pb:disabled:hover{background:var(--tag);border-color:var(--border)}
 @media (max-width:920px){
-  .app{max-width:100%;margin:0 auto;padding:1rem 0.75rem 2rem}
+  .app{max-width:100%;margin-left:max(.5rem,env(safe-area-inset-left,0px));margin-right:max(.5rem,env(safe-area-inset-right,0px));padding-left:.75rem;padding-right:.75rem}
   .panels{grid-template-columns:1fr}
   .panel--toolbar{position:static;max-height:none;overflow:visible;top:auto}
+  .pb{min-height:44px;padding:10px 12px;font-size:.78rem}
+  .split-pair-row .pb{min-height:48px}
+  .rb,.rl-add{min-height:40px;padding:8px 12px;font-size:.72rem}
+  .btn-seat-label{min-height:44px;padding:10px 16px!important}
+  .rl-step{min-width:40px;min-height:40px;font-size:.85rem}
+  .rl-del{min-width:40px;min-height:40px;padding:0 8px!important}
+  .rl-item{min-height:44px;padding:6px 8px;gap:6px}
+  .rl-val{min-width:28px;padding:4px 6px}
 }
-.seat-label-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:1rem;box-sizing:border-box}
+@media (pointer: coarse){
+  .pb{min-height:44px}
+  .rl-step{min-width:40px;min-height:40px}
+}
+@media (max-width:360px){
+  .seat-label-row2{grid-template-columns:1fr}
+}
+.seat-label-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:max(1rem,env(safe-area-inset-top,0px)) max(1rem,env(safe-area-inset-right,0px)) max(1rem,env(safe-area-inset-bottom,0px)) max(1rem,env(safe-area-inset-left,0px));box-sizing:border-box}
 .seat-label-modal[hidden]{display:none!important}
 .seat-label-modal__backdrop{position:absolute;inset:0;background:rgba(42,34,24,.45);cursor:pointer}
-.seat-label-modal__panel{position:relative;z-index:1;width:min(420px,calc(100vw - 2rem));max-height:calc(100vh - 2rem);overflow:auto;background:var(--panel-bg);border:1px solid var(--border);border-radius:10px;padding:1.1rem 1.15rem;box-shadow:0 12px 40px rgba(60,40,20,.2)}
+.seat-label-modal__panel{position:relative;z-index:1;width:min(420px,calc(100vw - 2rem - env(safe-area-inset-left,0px) - env(safe-area-inset-right,0px)));max-height:calc(100dvh - 2rem - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));overflow:auto;background:var(--panel-bg);border:1px solid var(--border);border-radius:10px;padding:1.1rem 1.15rem;box-shadow:0 12px 40px rgba(60,40,20,.2)}
 .seat-label-modal__panel h2{font-family:var(--fh);font-size:1.05rem;font-weight:normal;color:var(--text);margin:0 0 .5rem}
 .seat-label-modal__panel .rl-h{margin-bottom:.65rem}
 .seat-label-grid{display:grid;gap:.85rem;margin:.75rem 0}
@@ -323,7 +350,6 @@ function copyLeafState(src,dst){
 let layoutRoot=makeLeaf();
 let selectKind='leaf';
 let selectPath=[];
-let dragRowIndex=null;
 let chairPos=[];
 
 const LAYOUT_STORAGE_KEY='classroom_planner_library_v1';
@@ -1321,6 +1347,48 @@ function moveGridRow(from,to){
   renderRowList();
 }
 
+function clearRowDragOver(host){
+  host.querySelectorAll('.rl-item').forEach(x=>x.classList.remove('drag-over'));
+}
+
+/** Pointer-based row reorder (touch + mouse); avoids broken HTML5 DnD on iOS. */
+function attachRowReorderPointer(drag,rowEl,fromIndex,host){
+  let session=null;
+  function finish(e){
+    if(!session||e.pointerId!==session.pid)return;
+    try{drag.releasePointerCapture(e.pointerId);}catch(_){}
+    rowEl.classList.remove('dragging');
+    drag.classList.remove('rl-drag--active');
+    clearRowDragOver(host);
+    const under=document.elementFromPoint(e.clientX,e.clientY);
+    const item=under&&under.closest&&under.closest('.rl-item');
+    if(item&&host.contains(item)){
+      const to=parseInt(item.dataset.index,10);
+      if(!isNaN(to))moveGridRow(session.from,to);
+    }
+    session=null;
+  }
+  drag.addEventListener('pointerdown',e=>{
+    if((e.pointerType==='mouse'||e.pointerType==='pen')&&e.button!==0)return;
+    if(!e.isPrimary)return;
+    e.preventDefault();
+    session={from:fromIndex,pid:e.pointerId};
+    drag.setPointerCapture(e.pointerId);
+    rowEl.classList.add('dragging');
+    drag.classList.add('rl-drag--active');
+  });
+  drag.addEventListener('pointermove',e=>{
+    if(!session||e.pointerId!==session.pid)return;
+    e.preventDefault();
+    const under=document.elementFromPoint(e.clientX,e.clientY);
+    const item=under&&under.closest&&under.closest('.rl-item');
+    clearRowDragOver(host);
+    if(item&&host.contains(item))item.classList.add('drag-over');
+  });
+  drag.addEventListener('pointerup',finish);
+  drag.addEventListener('pointercancel',finish);
+}
+
 function bumpRowChairs(i,delta){
   const L=getActiveLeaf();
   if(!L)return;
@@ -1375,7 +1443,7 @@ function renderRowList(){
     const el=document.createElement('div');
     el.className='rl-item';
     el.dataset.index=String(i);
-    el.innerHTML='<span class="rl-drag" draggable="true" title="Drag to reorder">≡</span>'+
+    el.innerHTML='<span class="rl-drag" role="button" tabindex="0" title="Drag to reorder row" aria-label="Drag to reorder row">≡</span>'+
       '<span class="rl-lbl">Row <strong>'+(i+1)+'</strong></span>'+
       '<button type="button" class="rl-step" aria-label="Fewer chairs">−</button>'+
       '<span class="rl-val" tabindex="0" title="Click to type a number">'+n+'</span>'+
@@ -1386,29 +1454,7 @@ function renderRowList(){
     const [bMin,bPlus]=el.querySelectorAll('.rl-step');
     const del=el.querySelector('.rl-del');
 
-    drag.addEventListener('dragstart',e=>{
-      dragRowIndex=i;
-      el.classList.add('dragging');
-      e.dataTransfer.effectAllowed='move';
-      e.dataTransfer.setData('text/plain',String(i));
-    });
-    drag.addEventListener('dragend',()=>{
-      dragRowIndex=null;
-      el.classList.remove('dragging');
-      host.querySelectorAll('.rl-item').forEach(x=>x.classList.remove('drag-over'));
-    });
-    el.addEventListener('dragover',e=>{
-      e.preventDefault();
-      e.dataTransfer.dropEffect='move';
-      el.classList.add('drag-over');
-    });
-    el.addEventListener('dragleave',()=>el.classList.remove('drag-over'));
-    el.addEventListener('drop',e=>{
-      e.preventDefault();
-      el.classList.remove('drag-over');
-      const from=dragRowIndex!==null?dragRowIndex:parseInt(e.dataTransfer.getData('text/plain'),10);
-      if(!isNaN(from))moveGridRow(from,i);
-    });
+    attachRowReorderPointer(drag,el,i,host);
 
     bMin.addEventListener('click',()=>bumpRowChairs(i,-1));
     bPlus.addEventListener('click',()=>bumpRowChairs(i,1));
@@ -1535,7 +1581,8 @@ function wireCanvas(){
   const wrap=document.getElementById('canvasWrap');
   if(!cv||!wrap)return;
   const onPointerDown=e=>{
-    if(e.button!==0&&e.button!==undefined)return;
+    if(!e.isPrimary)return;
+    if((e.pointerType==='mouse'||e.pointerType==='pen')&&e.button!==0)return;
     const wr=wrap.getBoundingClientRect();
     if(e.clientX<wr.left||e.clientX>wr.right||e.clientY<wr.top||e.clientY>wr.bottom)return;
     const mx=(e.clientX-wr.left)*(FLOOR_W/Math.max(1,wr.width));
@@ -1559,12 +1606,7 @@ function wireCanvas(){
       draw();
     }
   };
-  wrap.addEventListener('mousedown',onPointerDown);
-  wrap.addEventListener('touchstart',e=>{
-    if(e.touches.length!==1)return;
-    const t=e.touches[0];
-    onPointerDown({clientX:t.clientX,clientY:t.clientY,button:0,preventDefault:()=>e.preventDefault()});
-  },{passive:false});
+  wrap.addEventListener('pointerdown',onPointerDown);
 }
 
 function readSeatLabelFormToState(){
