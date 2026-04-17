@@ -769,6 +769,406 @@
     }
 
     setViewMode(false);
+
+    initGoogleFormsIntegration();
+  }
+
+  function extractFormIdFromUrl(text) {
+    const raw = String(text || '').trim();
+    if (!raw) return { id: '', error: '' };
+    const mE = raw.match(/\/forms\/d\/e\/([^/?#]+)/i);
+    if (mE) return { id: mE[1].trim(), error: '' };
+    const mD = raw.match(/\/forms\/d\/([^/?#]+)/i);
+    if (mD) {
+      const seg = mD[1].trim();
+      if (seg.toLowerCase() === 'e') {
+        const m2 = raw.match(/\/forms\/d\/e\/([^/?#]+)/i);
+        if (m2) return { id: m2[1].trim(), error: '' };
+        return {
+          id: '',
+          error:
+            'That link could not be read. Copy the full address from Google Forms (starts with docs.google.com).',
+        };
+      }
+      return { id: seg, error: '' };
+    }
+    if (/^[a-zA-Z0-9_-]+$/.test(raw) && raw.length >= 6) return { id: raw, error: '' };
+    return {
+      id: '',
+      error:
+        'Paste the full form link from your browser, or the long ID by itself. If you only have a short forms.gle link, open it once, then copy the long address.',
+    };
+  }
+
+  function formsAppOriginHint() {
+    if (typeof window === 'undefined') return 'this app’s web address';
+    const p = window.location.protocol;
+    if (p === 'http:' || p === 'https:') return window.location.origin;
+    return 'the web address for this app (not a file on your desktop)';
+  }
+
+  function initGoogleFormsIntegration() {
+    const LS_KEY = 'cd.formsFormId';
+    const bar = document.getElementById('formsBar');
+    const input = document.getElementById('formsFormId');
+    const linkRedirect = document.getElementById('formsLinkRedirect');
+    const btnGis = document.getElementById('formsBtnGis');
+    const btnRefresh = document.getElementById('formsBtnRefresh');
+    const btnDisc = document.getElementById('formsBtnDisconnect');
+    const st = document.getElementById('formsStatus');
+    const out = document.getElementById('formsOut');
+    if (!bar || !input) return;
+
+    let cfg = { clientId: '', scopes: [] };
+    let gisReady = false;
+
+    function formsSetStatus(msg, ok) {
+      if (!st) return;
+      st.textContent = msg || '';
+      st.classList.toggle('ok', !!ok);
+    }
+
+    function friendlyOAuthQueryParam(err) {
+      const raw = decodeURIComponent(String(err || '').replace(/\+/g, ' '));
+      const c = raw.toLowerCase();
+      if (c.includes('access_denied')) {
+        return 'Sign-in was cancelled. Click “Sign in with Google” again when you are ready.';
+      }
+      if (c.includes('invalid_client') || c.includes('unauthorized_client')) {
+        return 'Google sign-in is not configured correctly on this computer. Ask whoever set up the app to check the Google Cloud client ID and secret.';
+      }
+      if (c.includes('redirect_uri_mismatch')) {
+        return 'The sign-in address does not match Google Cloud settings. The redirect URL in Google Cloud must match this app (see server instructions).';
+      }
+      if (c.includes('missing_code')) {
+        return 'Sign-in did not finish. Please try “Sign in with Google” again.';
+      }
+      if (c.includes('invalid_state')) {
+        return 'That sign-in session expired. Please try “Sign in with Google” again.';
+      }
+      if (raw.length > 120) {
+        return 'Something went wrong while connecting to Google. Try again, or use the other sign-in option.';
+      }
+      return 'Could not connect to Google: ' + raw;
+    }
+
+    function friendlyApiSummaryError(status, body) {
+      if (status === 404) {
+        return 'That form was not found. Check the link or ID, and make sure you are signed in with the Google account that owns the form.';
+      }
+      if (status === 403) {
+        return 'Google did not allow access to that form. Sign in with the account that owns or edits the form.';
+      }
+      const msg = (body && (body.message || body.error)) || '';
+      const m = String(msg).toLowerCase();
+      if (m.includes('not found') || m.includes('404')) {
+        return 'That form was not found. Double-check the link or ID.';
+      }
+      if (m.includes('permission') || m.includes('403')) {
+        return 'You may need to sign in with the Google account that owns this form.';
+      }
+      return 'Could not load results right now. Check your internet connection and try “Update results” again.';
+    }
+
+    /** Returns resolved form id, or '' if empty/invalid (sets status on invalid paste). */
+    function normalizeFormFieldAndSave() {
+      const raw = (input.value || '').trim();
+      if (!raw) return '';
+      const parsed = extractFormIdFromUrl(raw);
+      if (parsed.id) {
+        input.value = parsed.id;
+        try {
+          localStorage.setItem(LS_KEY, parsed.id);
+        } catch {
+          /* ignore */
+        }
+        return parsed.id;
+      }
+      if (parsed.error) formsSetStatus(parsed.error, false);
+      return '';
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+    function escapeAttr(s) {
+      return String(s).replace(/"/g, '%22');
+    }
+
+    async function loadConfig() {
+      try {
+        const r = await fetch('/api/auth/config', { credentials: 'same-origin' });
+        if (!r.ok) throw new Error('config');
+        cfg = await r.json();
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
+    async function loadAuthStatus() {
+      try {
+        const r = await fetch('/api/auth/status', { credentials: 'same-origin' });
+        if (!r.ok) throw new Error('bad');
+        return await r.json();
+      } catch {
+        return { connected: false };
+      }
+    }
+
+    function renderSummary(data) {
+      if (!out) return;
+      const lines = [];
+      lines.push('<strong>' + escapeHtml(data.title) + '</strong>');
+      if (data.responderUrl) {
+        lines.push(
+          'Link for students: <a href="' +
+            escapeAttr(data.responderUrl) +
+            '" target="_blank" rel="noopener">' +
+            escapeHtml(data.responderUrl) +
+            '</a>'
+        );
+      }
+      const a = data.attendance;
+      lines.push(
+        'Total responses: <strong>' +
+          a.responseCount +
+          '</strong> · Different email addresses: <strong>' +
+          a.uniqueRespondents +
+          '</strong>'
+      );
+      const qz = data.quiz;
+      if (qz && qz.questions && qz.questions.length) {
+        lines.push('<div class="forms-quiz">Quiz questions');
+        if (qz.overallPercentCorrect != null) {
+          lines.push(
+            ' · About <strong>' +
+              qz.overallPercentCorrect +
+              '%</strong> correct on average</div><ul>'
+          );
+        } else {
+          lines.push('</div><ul>');
+        }
+        for (const q of qz.questions) {
+          const pct = q.percentCorrect != null ? q.percentCorrect + '%' : '—';
+          lines.push(
+            '<li>' +
+              escapeHtml(q.title) +
+              ': <strong>' +
+              pct +
+              '</strong> (' +
+              q.correctCount +
+              '/' +
+              q.answeredCount +
+              ')</li>'
+          );
+        }
+        lines.push('</ul>');
+      } else {
+        lines.push(
+          '<span>No auto-graded quiz questions found. In Google Forms, turn on “Make this a quiz” and use multiple choice (or other supported types) to see scores here.</span>'
+        );
+      }
+      out.innerHTML = lines.join('');
+      out.hidden = false;
+    }
+
+    async function refreshSummary() {
+      const formId = normalizeFormFieldAndSave();
+      if (!formId) {
+        if (!(input.value || '').trim()) {
+          formsSetStatus('Paste your form link or ID above, then click “Update results”.', false);
+        }
+        return;
+      }
+      formsSetStatus('Loading results…', false);
+      try {
+        const r = await fetch(
+          '/api/forms/' + encodeURIComponent(formId) + '/summary',
+          { credentials: 'same-origin' }
+        );
+        if (r.status === 401) {
+          formsSetStatus('Please sign in with Google first (use the button above).', false);
+          return;
+        }
+        let j = {};
+        try {
+          j = await r.json();
+        } catch {
+          j = {};
+        }
+        if (!r.ok) {
+          if (out) out.hidden = true;
+          formsSetStatus(friendlyApiSummaryError(r.status, j), false);
+          return;
+        }
+        renderSummary(j);
+        formsSetStatus('Results are up to date.', true);
+      } catch {
+        if (out) out.hidden = true;
+        formsSetStatus(
+          'Could not reach the server. Open this page at ' +
+            formsAppOriginHint() +
+            ' instead of double-clicking the HTML file.',
+          false
+        );
+      }
+    }
+
+    function tryInitGis() {
+      if (!cfg.clientId || !btnGis || btnGis.dataset.gisBound === '1') return;
+      const g = window.google;
+      if (!g || !g.accounts || !g.accounts.oauth2 || !g.accounts.oauth2.initCodeClient) return;
+      gisReady = true;
+      btnGis.dataset.gisBound = '1';
+      btnGis.disabled = false;
+      const client = g.accounts.oauth2.initCodeClient({
+        client_id: cfg.clientId,
+        scope: (cfg.scopes || []).join(' '),
+        ux_mode: 'popup',
+        callback: async function (resp) {
+          if (!resp || !resp.code) return;
+            formsSetStatus('Finishing sign-in…', false);
+          try {
+            const r = await fetch('/api/auth/google/code', {
+              method: 'POST',
+              credentials: 'same-origin',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ code: resp.code }),
+            });
+            const j = await r.json();
+            if (!r.ok) {
+              const err = String(j.error || '').toLowerCase();
+              if (err.includes('invalid_grant') || err.includes('bad')) {
+                formsSetStatus('That sign-in did not work. Close any extra windows and try again.', false);
+              } else {
+                formsSetStatus('Sign-in did not finish. Try “Sign in with Google” in the main window instead.', false);
+              }
+              return;
+            }
+            formsSetStatus(
+              'You are signed in' + (j.email ? ' as ' + j.email : '') + '.',
+              true
+            );
+            if (btnDisc) btnDisc.disabled = false;
+            if (btnRefresh) btnRefresh.disabled = false;
+          } catch {
+            formsSetStatus('Could not finish sign-in. Check your connection or use the main “Sign in with Google” button.', false);
+          }
+        },
+      });
+      btnGis.addEventListener('click', function () {
+        client.requestCode();
+      });
+    }
+
+    async function bootstrap() {
+      const ok = await loadConfig();
+      if (!ok) {
+        formsSetStatus(
+          'This page could not reach the forms service. Open it at ' +
+            formsAppOriginHint() +
+            '. If you are testing locally, run npm start in the server folder first.',
+          false
+        );
+        if (linkRedirect) {
+          linkRedirect.setAttribute('tabindex', '-1');
+          linkRedirect.style.pointerEvents = 'none';
+          linkRedirect.style.opacity = '0.5';
+        }
+        return;
+      }
+      const status = await loadAuthStatus();
+      if (linkRedirect) {
+        linkRedirect.hidden = !cfg.clientId;
+        linkRedirect.removeAttribute('style');
+        linkRedirect.removeAttribute('tabindex');
+      }
+      if (btnGis) btnGis.hidden = !cfg.clientId;
+      if (btnDisc) btnDisc.disabled = !status.connected;
+      if (btnRefresh) btnRefresh.disabled = !status.connected;
+      if (status.connected) {
+        formsSetStatus(
+          'Signed in' + (status.email ? ' as ' + status.email : '') + '. You can update results below.',
+          true
+        );
+      } else {
+        formsSetStatus(
+          cfg.clientId
+            ? 'Next step: click “Sign in with Google” so this page can read your form responses.'
+            : 'This copy of the app is not fully set up yet (missing Google client ID on the server).',
+          false
+        );
+      }
+
+      try {
+        const saved = localStorage.getItem(LS_KEY);
+        if (saved) input.value = saved;
+      } catch {
+        /* ignore */
+      }
+
+      tryInitGis();
+      if (!gisReady) {
+        let n = 0;
+        const t = setInterval(function () {
+          n += 1;
+          tryInitGis();
+          if (gisReady || n > 80) clearInterval(t);
+        }, 150);
+      }
+
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('forms_connected')) {
+        formsSetStatus('You are signed in to Google. Paste your form link, then click “Update results”.', true);
+        if (btnDisc) btnDisc.disabled = false;
+        if (btnRefresh) btnRefresh.disabled = false;
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+      const ferr = params.get('forms_error');
+      if (ferr) {
+        formsSetStatus(friendlyOAuthQueryParam(ferr), false);
+        window.history.replaceState({}, '', window.location.pathname);
+      }
+    }
+
+    if (btnRefresh) btnRefresh.addEventListener('click', refreshSummary);
+    if (btnDisc) {
+      btnDisc.addEventListener('click', async function () {
+        if (
+          !window.confirm(
+            'Sign out from Google on this computer? You can sign in again later.'
+          )
+        ) {
+          return;
+        }
+        try {
+          await fetch('/api/auth/disconnect', { method: 'POST', credentials: 'same-origin' });
+          if (out) out.hidden = true;
+          formsSetStatus('You are signed out. Sign in again when you want to load form results.', false);
+          btnDisc.disabled = true;
+          if (btnRefresh) btnRefresh.disabled = true;
+        } catch {
+          formsSetStatus('Could not sign out. Check your connection and try again.', false);
+        }
+      });
+    }
+    input.addEventListener('blur', function () {
+      const raw = (input.value || '').trim();
+      if (!raw) return;
+      normalizeFormFieldAndSave();
+    });
+    input.addEventListener('paste', function () {
+      setTimeout(function () {
+        normalizeFormFieldAndSave();
+      }, 0);
+    });
+
+    bootstrap();
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);

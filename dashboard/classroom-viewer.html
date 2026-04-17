@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Classroom viewer</title>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -11,62 +11,207 @@
       --accent:#8B5E3C;--accent-l:#C49A6C;--shadow:rgba(60,40,20,.12);
       --fh:'Georgia','Times New Roman',serif;--fb:'Helvetica Neue',Helvetica,Arial,sans-serif;
       --err:#C0604A;--hud-bg:rgba(245,242,236,.88);
+      --ease-out:cubic-bezier(.22,1,.36,1);
+      --dur-enter:.42s;
+      --dur-short:.22s;
+    }
+    @keyframes shell-rise{
+      from{opacity:0;transform:translateY(-6px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+    @keyframes empty-pop{
+      from{opacity:0;transform:translateY(8px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+    @keyframes canvas-in{
+      from{opacity:0;transform:scale(.985)}
+      to{opacity:1;transform:scale(1)}
+    }
+    @keyframes dragover-pulse{
+      0%,100%{background-color:rgba(237,224,210,.35);outline-color:var(--accent-l)}
+      50%{background-color:rgba(237,224,210,.52);outline-color:var(--accent)}
+    }
+    @keyframes hud-in{
+      from{opacity:0;transform:translateY(10px)}
+      to{opacity:1;transform:translateY(0)}
+    }
+    @media (prefers-reduced-motion:reduce){
+      .app>.banner,.app>.floor,.empty-msg:not([hidden]),#cv:not([hidden]),#hud:not([hidden]),.canvas-wrap.dragover{
+        animation:none!important
+      }
+      .btn-open{transition-duration:.01ms!important}
+      .status{transition-duration:.01ms!important}
     }
     html,body{height:100%;overflow:hidden}
     body{font-family:var(--fb);background:var(--bg);color:var(--text)}
     .app{display:flex;flex-direction:column;height:100%;min-height:100dvh}
+    .app>.banner{
+      animation:shell-rise var(--dur-enter) var(--ease-out) both
+    }
+    .app>.floor{
+      animation:shell-rise var(--dur-enter) var(--ease-out) .06s both
+    }
     .banner{
       flex-shrink:0;display:flex;align-items:center;gap:.65rem 1rem;flex-wrap:wrap;
-      padding:.45rem .85rem;border-bottom:1px solid var(--border);
-      background:var(--panel-bg);backdrop-filter:blur(8px);box-shadow:0 1px 0 rgba(255,255,255,.6) inset
+      padding:.45rem max(.85rem,env(safe-area-inset-right,0px)) .45rem max(.85rem,env(safe-area-inset-left,0px));
+      padding-top:max(.45rem,env(safe-area-inset-top,0px));
+      border-bottom:1px solid var(--border);
+      background:var(--panel-bg);backdrop-filter:blur(8px);
+      box-shadow:inset 3px 0 0 var(--accent-l),0 1px 0 rgba(255,255,255,.6) inset
     }
+    .banner-actions{display:contents}
     .banner-title{font-family:var(--fh);font-size:1.05rem;font-weight:normal;line-height:1.2}
     .banner-title small{font-size:.62rem;color:var(--muted);margin-left:.5rem;font-family:var(--fb);text-transform:uppercase;letter-spacing:.04em}
     .banner-meta{flex:1;min-width:0;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
-    .layout-name{font-size:.72rem;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(42vw,280px)}
+    .layout-name{font-size:.72rem;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(100%,min(42vw,280px))}
     .layout-name:not(:empty){color:var(--text)}
-    .status{font-size:.65rem;color:var(--muted);line-height:1.3;flex:1;min-width:120px}
+    .status{
+      font-size:.65rem;color:var(--muted);line-height:1.3;flex:1;min-width:120px;
+      transition:color var(--dur-short) var(--ease-out)
+    }
     .status.err{color:var(--err)}
     .btn-open{
-      flex-shrink:0;font-size:.65rem;padding:.35rem .65rem;border:1px solid var(--border);border-radius:5px;
+      flex-shrink:0;font-size:.65rem;padding:.38rem .7rem;border:1px solid var(--border);border-radius:7px;
       background:var(--tag);color:var(--text);cursor:pointer;font-family:var(--fb);
-      transition:background .15s ease,border-color .15s ease,color .15s ease
+      transition:background .18s var(--ease-out),border-color .18s var(--ease-out),color .18s var(--ease-out),
+        transform .18s var(--ease-out),box-shadow .18s var(--ease-out)
     }
-    .btn-open:hover{border-color:var(--accent-l);background:#EDE0D2;color:var(--text)}
+    .btn-open:hover:not(:disabled){
+      border-color:var(--accent-l);background:#EDE0D2;color:var(--text);
+      transform:translateY(-1px);box-shadow:0 3px 10px var(--shadow)
+    }
+    .btn-open:active:not(:disabled){
+      transform:translateY(0);box-shadow:0 1px 4px var(--shadow)
+    }
     .btn-open:focus-visible{outline:2px solid var(--accent-l);outline-offset:2px}
     .btn-open:disabled{opacity:.45;cursor:not-allowed}
     .btn-open[aria-pressed="true"]{background:#EDE0D2;border-color:var(--accent-l);color:var(--text)}
     #fileInput{position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;left:-99px}
     .floor{
       flex:1;min-height:0;display:flex;flex-direction:column;position:relative;
-      background:#EAE5DC;
+      padding-bottom:env(safe-area-inset-bottom,0px);
+      background-color:#EAE5DC;
       background-image:radial-gradient(circle,#C4BBAC 1px,transparent 1px);
-      background-size:20px 20px
+      background-size:20px 20px;background-attachment:fixed
     }
+    .floor::before{
+      content:"";position:absolute;inset:0;z-index:0;pointer-events:none;
+      background:radial-gradient(ellipse 90% 75% at 50% 42%,transparent 50%,rgba(90,62,40,.045) 100%)
+    }
+    .canvas-wrap,.hud{position:relative;z-index:1}
     .canvas-wrap{
       flex:1;min-height:0;width:100%;display:flex;align-items:center;justify-content:center;padding:6px;
-      overflow:hidden
+      overflow:hidden;touch-action:manipulation
     }
     .canvas-wrap.is-empty{cursor:default}
-    .canvas-wrap.dragover{outline:2px dashed var(--accent-l);outline-offset:-4px;background-color:rgba(237,224,210,.35)}
+    .canvas-wrap.dragover{
+      outline:2px dashed var(--accent-l);outline-offset:-4px;background-color:rgba(237,224,210,.35);
+      animation:dragover-pulse 1.1s ease-in-out infinite
+    }
     .empty-msg{
       font-size:.78rem;color:var(--muted);text-align:center;line-height:1.55;padding:1rem 1.5rem;
       width:100%;margin:0;box-sizing:border-box;pointer-events:none
     }
+    .empty-msg:not([hidden]){
+      animation:empty-pop .55s var(--ease-out) .14s both
+    }
     #cv{display:block;flex-shrink:0}
+    #cv:not([hidden]){
+      animation:canvas-in .45s var(--ease-out) both
+    }
     .hud{
       flex-shrink:0;pointer-events:none;
-      display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.5rem 1rem;
-      padding:.4rem .75rem .55rem;
+      display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.55rem 1.1rem;
+      padding:.45rem max(.85rem,env(safe-area-inset-right,0px)) max(.58rem,env(safe-area-inset-bottom,0px)) max(.85rem,env(safe-area-inset-left,0px));
       background:var(--hud-bg);backdrop-filter:blur(6px);
       border-top:1px solid var(--border);box-shadow:0 -4px 16px var(--shadow)
     }
     .hud[hidden]{display:none!important}
-    .leg{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .li{display:flex;align-items:center;gap:5px;font-size:.62rem;color:var(--muted)}
-    .ls{width:12px;height:12px;border-radius:2px;border:1px solid var(--border)}
+    #hud:not([hidden]){
+      animation:hud-in .38s var(--ease-out) both
+    }
+    .leg{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .li{
+      display:flex;align-items:center;gap:6px;font-size:.62rem;color:var(--muted);
+      padding:.22rem .5rem .22rem .35rem;background:var(--panel-bg);border:1px solid var(--border);
+      border-radius:999px;box-shadow:0 1px 4px rgba(60,40,20,.08)
+    }
+    .ls{width:12px;height:12px;border-radius:2px;border:1px solid var(--border);flex-shrink:0}
     .stats{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
     .stat{font-size:.62rem;color:var(--muted)}.stat strong{color:var(--text);font-weight:600}
+    .forms-bar{
+      flex-shrink:0;display:flex;flex-direction:column;align-items:stretch;gap:.4rem;
+      padding:.5rem .85rem .55rem;border-bottom:1px solid var(--border);
+      background:rgba(253,250,245,.78);font-size:.68rem
+    }
+    .forms-bar[hidden]{display:none!important}
+    .forms-intro{display:flex;flex-wrap:wrap;align-items:baseline;gap:.35rem .65rem}
+    .forms-title{font-family:var(--fh);font-size:.78rem;color:var(--text);font-weight:600}
+    .forms-intro-text{font-size:.65rem;color:var(--muted);line-height:1.4;max-width:52rem}
+    .forms-help{
+      font-size:.62rem;color:var(--muted);border:1px solid var(--border);border-radius:8px;
+      padding:.28rem .45rem;background:var(--panel-bg)
+    }
+    .forms-help>summary{
+      cursor:pointer;color:var(--text);font-weight:600;font-size:.65rem;list-style-position:outside
+    }
+    .forms-help>summary:focus-visible{outline:2px solid var(--accent-l);outline-offset:2px;border-radius:4px}
+    .forms-help ul{margin:.35rem 0 0 1.1rem;line-height:1.45;padding:0}
+    .forms-help li{margin:.15rem 0}
+    .forms-row{
+      display:flex;flex-wrap:wrap;align-items:flex-end;gap:.45rem .65rem
+    }
+    .forms-field-wrap{display:flex;flex-direction:column;gap:.18rem;flex:1;min-width:min(100%,200px);max-width:min(100%,420px)}
+    .forms-label{font-size:.58rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+    .forms-field{
+      width:100%;padding:.32rem .45rem;border:1px solid var(--border);
+      border-radius:6px;background:#fff;color:var(--text);font-size:.65rem;font-family:var(--fb)
+    }
+    .forms-field:focus-visible{outline:2px solid var(--accent-l);outline-offset:1px}
+    .forms-actions{display:flex;flex-wrap:wrap;align-items:center;gap:.4rem .55rem}
+    .forms-btn-secondary{font-size:.6rem!important;padding:.28rem .5rem!important;opacity:.92}
+    .forms-meta{font-size:.62rem;color:var(--muted);flex:1;min-width:140px;line-height:1.35}
+    .forms-meta.ok{color:var(--text)}
+    .forms-hint{font-size:.6rem;color:var(--muted);line-height:1.4;flex-basis:100%;max-width:none;margin-top:-.05rem}
+    .forms-out{
+      width:100%;font-size:.62rem;color:var(--muted);line-height:1.45;
+      padding:.35rem 0 0;border-top:1px dashed var(--border);margin-top:.15rem
+    }
+    .forms-out a{color:var(--accent);word-break:break-all}
+    .forms-out strong{color:var(--text);font-weight:600}
+    .forms-quiz{margin-top:.35rem}
+    .forms-quiz li{margin:.12rem 0 0 1rem}
+    @media (max-width:640px){
+      .banner{
+        flex-direction:column;align-items:stretch;gap:.5rem;
+        padding-left:max(.75rem,env(safe-area-inset-left,0px));
+        padding-right:max(.75rem,env(safe-area-inset-right,0px))
+      }
+      .banner-title{flex:none}
+      .banner-meta{
+        flex-direction:column;align-items:stretch;gap:.35rem;width:100%
+      }
+      .layout-name{
+        max-width:100%;white-space:normal;overflow:visible;text-overflow:clip;word-break:break-word
+      }
+      .status{flex:none;min-width:0;width:100%}
+      .banner-actions{
+        display:grid;grid-template-columns:1fr 1fr;gap:.5rem;width:100%
+      }
+      .btn-open{
+        min-height:44px;padding:.55rem .65rem;font-size:.72rem;width:100%;justify-self:stretch
+      }
+      .forms-bar{
+        padding-left:max(.75rem,env(safe-area-inset-left,0px));
+        padding-right:max(.75rem,env(safe-area-inset-right,0px))
+      }
+      .forms-actions{flex-direction:column;align-items:stretch}
+      .forms-actions .btn-open,.forms-actions a.btn-open{
+        width:100%;min-height:44px;display:inline-flex;align-items:center;justify-content:center;
+        text-align:center;box-sizing:border-box
+      }
+      .forms-meta{min-width:0}
+    }
   </style>
 </head>
 <body>
@@ -78,14 +223,47 @@
       <span class="status" id="status" role="status" aria-live="polite"></span>
     </div>
     <input type="file" id="fileInput" accept=".json,application/json,.classroom.json" aria-label="Choose classroom JSON file">
-    <button type="button" class="btn-open" id="btnPick" title="Planner export: .classroom.json">Open layout…</button>
-    <button type="button" class="btn-open" id="btnSeatLabels" disabled aria-pressed="false" title="Show or hide seat codes (e.g. A-1) on each seat">Seat labels</button>
+    <div class="banner-actions">
+      <button type="button" class="btn-open" id="btnPick" title="Planner export: .classroom.json">Open layout…</button>
+      <button type="button" class="btn-open" id="btnSeatLabels" disabled aria-pressed="false" title="Show or hide seat codes (e.g. A-1) on each seat">Seat labels</button>
+    </div>
   </header>
+
+  <section class="forms-bar" id="formsBar" aria-label="Google Forms attendance and polls">
+    <div class="forms-intro">
+      <span class="forms-title">Attendance and polls</span>
+      <span class="forms-intro-text">See responses from a Google Form you own (attendance counts and quiz scores).</span>
+    </div>
+    <details class="forms-help">
+      <summary>How this works</summary>
+      <ul>
+        <li><strong>Sign in with Google</strong> using the same account that owns (or can edit) your form.</li>
+        <li>Students still fill out the <strong>normal Google Form</strong> in their browser—nothing changes for them.</li>
+        <li>This page only <strong>reads</strong> responses so you can see counts and quiz percentages here.</li>
+        <li>Use the <strong>web address your school or host gave you</strong> (bookmark it). If you are testing on your own computer, that may look like <code>http://localhost:3847</code>.</li>
+      </ul>
+    </details>
+    <div class="forms-row">
+      <div class="forms-field-wrap">
+        <label class="forms-label" for="formsFormId">Form link or ID</label>
+        <input type="text" class="forms-field" id="formsFormId" placeholder="Paste the form link from the address bar, or paste the long ID" autocomplete="off" spellcheck="false" aria-describedby="formsFormHint">
+      </div>
+      <span id="formsFormHint" class="forms-hint">Tip: In Google Forms, use <strong>Send</strong> or copy the link from the browser while editing the form. Short <code>forms.gle</code> links need to be opened once, then copy the long address from the bar.</span>
+    </div>
+    <div class="forms-actions">
+      <a class="btn-open" id="formsLinkRedirect" href="/auth/google">Sign in with Google</a>
+      <button type="button" class="btn-open forms-btn-secondary" id="formsBtnGis" disabled title="Optional: sign in in a small window instead of leaving this page">Or use a small sign-in window</button>
+      <button type="button" class="btn-open" id="formsBtnRefresh" disabled>Update results</button>
+      <button type="button" class="btn-open" id="formsBtnDisconnect" disabled>Sign out</button>
+      <span class="forms-meta" id="formsStatus" role="status" aria-live="polite"></span>
+    </div>
+    <div class="forms-out" id="formsOut" hidden></div>
+  </section>
 
   <main class="floor" id="floor" aria-label="Floor plan area. Drop a layout file here.">
     <div class="canvas-wrap is-empty" id="canvasWrap">
       <canvas id="cv" hidden aria-label="Floor plan canvas"></canvas>
-      <p class="empty-msg" id="emptyMsg">Drop a <code>.classroom.json</code> file here or use <strong>Open layout…</strong> in the bar.</p>
+      <p class="empty-msg" id="emptyMsg">Use <strong>Open layout…</strong> to choose a <code>.classroom.json</code> file. On a computer you can also drop the file onto the plan.</p>
     </div>
     <div class="hud" id="hud" hidden>
       <div class="leg" id="legend">
@@ -97,6 +275,7 @@
     </div>
   </main>
 </div>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="classroom-viewer.js"></script>
 </body>
 </html>

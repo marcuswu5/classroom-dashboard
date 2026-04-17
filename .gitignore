@@ -1,1 +1,5 @@
 .cursor/
+server/node_modules/
+server/.env
+server/data/oauth-tokens.json
+server/data/sessions/
